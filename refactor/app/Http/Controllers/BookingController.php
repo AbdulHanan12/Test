@@ -38,7 +38,6 @@ class BookingController extends Controller
         if($user_id = $request->get('user_id')) {
 
             $response = $this->repository->getUsersJobs($user_id);
-
         }
         elseif($request->__authenticatedUser->user_type == env('ADMIN_ROLE_ID') || $request->__authenticatedUser->user_type == env('SUPERADMIN_ROLE_ID'))
         {
@@ -65,9 +64,7 @@ class BookingController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->all();
-
-        $response = $this->repository->store($request->__authenticatedUser, $data);
+        $response = $this->repository->store($request->__authenticatedUser, $request->all());
 
         return response($response);
 
@@ -196,11 +193,8 @@ class BookingController extends Controller
     {
         $data = $request->all();
 
-        if (isset($data['distance']) && $data['distance'] != "") {
-            $distance = $data['distance'];
-        } else {
-            $distance = "";
-        }
+        $distance = (isset($data['distance']) && $data['distance'] != "") ? $data['distance'] : "";
+
         if (isset($data['time']) && $data['time'] != "") {
             $time = $data['time'];
         } else {
@@ -279,15 +273,15 @@ class BookingController extends Controller
      */
     public function resendSMSNotifications(Request $request)
     {
-        $data = $request->all();
-        $job = $this->repository->find($data['jobid']);
-        $job_data = $this->repository->jobToData($job);
-
+        
         try {
+            $data = $request->all();
+            $job = $this->repository->find($data['jobid']);
+            $job_data = $this->repository->jobToData($job);
             $this->repository->sendSMSNotificationToTranslator($job);
             return response(['success' => 'SMS sent']);
         } catch (\Exception $e) {
-            return response(['success' => $e->getMessage()]);
+            return response(['error' => $e->getMessage()]);
         }
     }
 
